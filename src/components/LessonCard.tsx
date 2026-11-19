@@ -4,6 +4,7 @@ import { Lesson } from '../types/vocab';
 
 interface LessonCardProps {
   lesson: Lesson;
+  canManageContent?: boolean;
   onOpen: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -12,6 +13,7 @@ interface LessonCardProps {
 
 export const LessonCard: React.FC<LessonCardProps> = ({
   lesson,
+  canManageContent = true,
   onOpen,
   onEdit,
   onDelete,
@@ -60,24 +62,28 @@ export const LessonCard: React.FC<LessonCardProps> = ({
         </span>
 
         <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={onEdit}
-            aria-label={`Edit Lesson ${lesson.lessonCode}`}
-            title="Edit lesson"
-            className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            <Edit3 className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            aria-label={`Delete Lesson ${lesson.lessonCode}`}
-            title="Delete lesson"
-            className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-950/40 transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          {canManageContent && (
+            <>
+              <button
+                type="button"
+                onClick={onEdit}
+                aria-label={`Edit Lesson ${lesson.lessonCode}`}
+                title="Edit lesson"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <Edit3 className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={onDelete}
+                aria-label={`Delete Lesson ${lesson.lessonCode}`}
+                title="Delete lesson"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-950/40 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
           <button
             type="button"
             onClick={onOpen}

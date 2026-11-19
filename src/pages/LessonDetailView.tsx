@@ -18,6 +18,7 @@ interface LessonDetailViewProps {
   lesson: Lesson;
   prevLesson: Lesson | null;
   nextLesson: Lesson | null;
+  canManageContent?: boolean;
   onBack: () => void;
   onOpenLesson: (lessonId: string) => void;
   onEditLesson: (lessonId: string) => void;
@@ -32,6 +33,7 @@ export const LessonDetailView: React.FC<LessonDetailViewProps> = ({
   lesson,
   prevLesson,
   nextLesson,
+  canManageContent = true,
   onBack,
   onOpenLesson,
   onEditLesson,
@@ -105,23 +107,27 @@ export const LessonDetailView: React.FC<LessonDetailViewProps> = ({
             <span>Print</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => onEditLesson(lesson.id)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>Edit</span>
-          </button>
+          {canManageContent && (
+            <>
+              <button
+                type="button"
+                onClick={() => onEditLesson(lesson.id)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Edit</span>
+              </button>
 
-          <button
-            type="button"
-            onClick={() => onDeleteLesson(lesson)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-lg text-xs font-medium border border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors whitespace-nowrap"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span>Delete</span>
-          </button>
+              <button
+                type="button"
+                onClick={() => onDeleteLesson(lesson)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-lg text-xs font-medium border border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors whitespace-nowrap"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 

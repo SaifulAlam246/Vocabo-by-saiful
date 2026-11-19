@@ -1,4 +1,4 @@
-import { Lesson, PartSummary } from '../types/vocab';
+import { Lesson, PartRecord, PartSummary } from '../types/vocab';
 
 export function formatLessonCode(partNumber: number, lessonIndexInPart: number): string {
   return `${partNumber}.${lessonIndexInPart}`;
@@ -36,23 +36,6 @@ export function computeNextLessonSlot(
 
   const occupied = new Set(lessons.map((l) => `${l.partNumber}.${l.lessonIndexInPart}`));
 
-  // Find the highest part currently used, then find next sequential open slot
-  let part = 1;
-  while (true) {
-    for (let idx = 1; idx <= lessonsPerPart; idx++) {
-      const code = `${part}.${idx}`;
-      if (!occupied.has(code)) {
-        // Check if there are lessons after this gap or if this is truly the next slot
-        // Wait: if user deleted 1.2 while 1.3 exists, should next be after max or fill gap?
-        // Actually finding the slot right after the highest occupied slot is most intuitive for sequential study,
-        // unless user explicitly overrides. Let's check highest occupied slot first!
-        break;
-      }
-    }
-    part++;
-    if (part > 500) break;
-  }
-
   const sorted = sortLessons(lessons);
   const last = sorted[sorted.length - 1];
   let nextPart = last.partNumber;
@@ -79,9 +62,21 @@ export function computeNextLessonSlot(
   };
 }
 
-export function groupLessonsIntoParts(lessons: Lesson[], lessonsPerPart = 5): PartSummary[] {
+export function groupLessonsIntoParts(
+  lessons: Lesson[],
+  lessonsPerPart = 5,
+  partRecords: PartRecord[] = []
+): PartSummary[] {
   const sorted = sortLessons(lessons);
   const map = new Map<number, Lesson[]>();
+  const recordByNumber = new Map<number, PartRecord>();
+
+  for (const pr of partRecords) {
+    recordByNumber.set(pr.partNumber, pr);
+    if (!map.has(pr.partNumber)) {
+      map.set(pr.partNumber, []);
+    }
+  }
 
   for (const lesson of sorted) {
     const existing = map.get(lesson.partNumber) ?? [];
@@ -94,6 +89,7 @@ export function groupLessonsIntoParts(lessons: Lesson[], lessonsPerPart = 5): Pa
 
   for (const partNumber of partNumbers) {
     const partLessons = map.get(partNumber) ?? [];
+    const rec = recordByNumber.get(partNumber);
     const totalWords = partLessons.reduce((sum, l) => sum + l.words.length, 0);
     const completedLessons = partLessons.filter((l) => l.completed).length;
     const totalTargetLessons = Math.max(lessonsPerPart, partLessons.length);
@@ -101,7 +97,10 @@ export function groupLessonsIntoParts(lessons: Lesson[], lessonsPerPart = 5): Pa
       totalTargetLessons > 0 ? Math.round((completedLessons / totalTargetLessons) * 100) : 0;
 
     parts.push({
+      id: rec?.id,
       partNumber,
+      title: rec?.title || `Part ${partNumber}`,
+      description: rec?.description || '',
       lessons: partLessons,
       totalWords,
       completedLessons,

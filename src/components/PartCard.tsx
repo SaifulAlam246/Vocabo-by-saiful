@@ -4,12 +4,14 @@ import { Lesson, PartSummary } from '../types/vocab';
 
 interface PartCardProps {
   part: PartSummary;
+  canManageContent?: boolean;
   onOpenLesson: (lessonId: string) => void;
   onAddLessonToPart: (partNumber: number) => void;
 }
 
 export const PartCard: React.FC<PartCardProps> = ({
   part,
+  canManageContent = true,
   onOpenLesson,
   onAddLessonToPart,
 }) => {
@@ -22,8 +24,13 @@ export const PartCard: React.FC<PartCardProps> = ({
           </div>
           <div>
             <h2 className="font-display font-bold text-lg text-slate-900 dark:text-slate-100">
-              Part {part.partNumber}
+              {part.title || `Part ${part.partNumber}`}
             </h2>
+            {part.description && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {part.description}
+              </p>
+            )}
             <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <span className="font-mono-num">
                 {part.lessons.length} / {part.totalTargetLessons} Lessons
@@ -40,13 +47,15 @@ export const PartCard: React.FC<PartCardProps> = ({
           <span className="font-mono-num text-sm font-semibold text-slate-700 dark:text-slate-200">
             {part.progressPercent}%
           </span>
-          <button
-            type="button"
-            onClick={() => onAddLessonToPart(part.partNumber)}
-            className="px-3 py-1.5 min-h-[36px] rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
-          >
-            + Add to Part {part.partNumber}
-          </button>
+          {canManageContent && (
+            <button
+              type="button"
+              onClick={() => onAddLessonToPart(part.partNumber)}
+              className="px-3 py-1.5 min-h-[36px] rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
+            >
+              + Add to Part {part.partNumber}
+            </button>
+          )}
         </div>
       </div>
 

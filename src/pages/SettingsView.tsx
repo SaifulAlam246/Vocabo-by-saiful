@@ -1,17 +1,33 @@
 import React, { useRef, useState } from 'react';
 import {
+  AlertTriangle,
+  CheckCircle2,
+  Database,
   Download,
+  Lock,
   Moon,
+  RefreshCw,
   RotateCcw,
+  ShieldCheck,
   Sun,
   Trash2,
   Upload,
 } from 'lucide-react';
-import { AppSettings, VocabStoreData } from '../types/vocab';
+import { AppSettings, SupabaseSetupStatus, VocabStoreData } from '../types/vocab';
 import { exportStoreToJson, validateBackupJson } from '../utils/storage';
 
 interface SettingsViewProps {
   storeData: VocabStoreData;
+  supabaseConfigured: boolean;
+  supabaseConfigError?: string | null;
+  setupStatus?: SupabaseSetupStatus | null;
+  isAdmin: boolean;
+  adminEmail: string | null;
+  syncing: boolean;
+  onVerifyDatabaseSetup: () => Promise<SupabaseSetupStatus | null>;
+  onRefreshSupabase: () => Promise<void>;
+  onOpenAdminLogin: () => void;
+  onOpenAdminDashboard: () => void;
   onUpdateSettings: (patch: Partial<AppSettings>) => void;
   onImportBackup: (imported: VocabStoreData, mode: 'replace' | 'merge') => void;
   onRestoreSample: () => void;
@@ -21,6 +37,16 @@ interface SettingsViewProps {
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
   storeData,
+  supabaseConfigured,
+  supabaseConfigError,
+  setupStatus,
+  isAdmin,
+  adminEmail,
+  syncing,
+  onVerifyDatabaseSetup,
+  onRefreshSupabase,
+  onOpenAdminLogin,
+  onOpenAdminDashboard,
   onUpdateSettings,
   onImportBackup,
   onRestoreSample,
@@ -69,9 +95,111 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           Settings &amp; Backup
         </h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Customize your workspace appearance, Part structure, and local backup data.
+          Customize your workspace appearance, Part structure, cloud sync, and personal progress
+          backups.
         </p>
       </div>
+
+      {/* Supabase Sync & Admin Access */}
+      <section className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-6 space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <Database className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <h2 className="font-display font-semibold text-base text-slate-900 dark:text-slate-100">
+                Shared Vocabulary Database &amp; Admin Access
+              </h2>
+            </div>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              {supabaseConfigured
+                ? 'Vocabulary content syncs globally from Supabase. Your favorites, quiz history, and revision progress stay private to this browser.'
+                : supabaseConfigError
+                  ? `Supabase configuration issue: ${supabaseConfigError} Running safely in local browser mode.`
+                  : 'Supabase environment variables are not configured yet; currently running in local browser mode.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2.5">
+          {supabaseConfigured && (
+            <>
+              <button
+                type="button"
+                disabled={syncing}
+                onClick={() => void onRefreshSupabase()}
+                className="inline-flex items-center gap-2 px-4 py-2 min-h-[42px] rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                <span>{syncing ? 'Syncing...' : 'Refresh Vocabulary from Supabase'}</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={syncing}
+                onClick={() => void onVerifyDatabaseSetup()}
+                className="inline-flex items-center gap-2 px-4 py-2 min-h-[42px] rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+              >
+                <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span>Verify Database Tables</span>
+              </button>
+            </>
+          )}
+
+          {isAdmin ? (
+            <button
+              type="button"
+              onClick={onOpenAdminDashboard}
+              className="inline-flex items-center gap-2 px-4 py-2 min-h-[42px] rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Open Admin Dashboard ({adminEmail || 'Admin'})</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpenAdminLogin}
+              className="inline-flex items-center gap-2 px-4 py-2 min-h-[42px] rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              <Lock className="w-4 h-4" />
+              <span>Admin Login</span>
+            </button>
+          )}
+        </div>
+
+        {supabaseConfigured && setupStatus && (
+          <div
+            className={`rounded-lg border p-3.5 text-xs space-y-2 ${
+              setupStatus.allTablesReady
+                ? 'bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-200'
+                : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-200'
+            }`}
+          >
+            <div className="flex items-center gap-2 font-semibold">
+              {setupStatus.allTablesReady ? (
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+              )}
+              <span>{setupStatus.summary}</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-1">
+              {setupStatus.tables.map((t) => (
+                <div
+                  key={t.tableName}
+                  className="flex items-center gap-1.5 font-mono text-[11px]"
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full shrink-0 ${
+                      t.exists ? 'bg-emerald-500' : 'bg-rose-500'
+                    }`}
+                  />
+                  <span className="truncate">{t.tableName}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* Appearance */}
       <section className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 sm:p-6">
@@ -174,8 +302,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             Backup &amp; Restore
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            All lessons, favorites, quiz attempts, and revision progress are stored locally in your
-            browser. Export JSON backups regularly to keep your data safe across devices.
+            Export a full JSON snapshot of your lessons and personal study progress.
+            {!supabaseConfigured &&
+              ' In local mode, you can also import backups or reload Sample Lesson 1.1.'}
           </p>
         </div>
 
@@ -189,34 +318,38 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <span>Export All Data (JSON)</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[42px] rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-          >
-            <Upload className="w-4 h-4" />
-            <span>Import Backup JSON</span>
-          </button>
+          {!supabaseConfigured && (
+            <>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[42px] rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                <Upload className="w-4 h-4" />
+                <span>Import Backup JSON</span>
+              </button>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/json,.json"
-            onChange={handleFileSelected}
-            className="hidden"
-          />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/json,.json"
+                onChange={handleFileSelected}
+                className="hidden"
+              />
 
-          <button
-            type="button"
-            onClick={onRestoreSample}
-            className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[42px] rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-          >
-            <RotateCcw className="w-4 h-4" />
-            <span>Load Sample Lesson 1.1</span>
-          </button>
+              <button
+                type="button"
+                onClick={onRestoreSample}
+                className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[42px] rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Load Sample Lesson 1.1</span>
+              </button>
+            </>
+          )}
         </div>
 
-        {pendingImport && (
+        {pendingImport && !supabaseConfigured && (
           <div className="rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 space-y-3">
             <div className="text-sm text-slate-800 dark:text-slate-200">
               Backup verified:{' '}
@@ -263,11 +396,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* Danger Zone */}
       <section className="rounded-xl bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/50 p-5 sm:p-6">
         <h2 className="font-display font-semibold text-base text-rose-700 dark:text-rose-400">
-          Danger Zone
+          {supabaseConfigured ? 'Reset Personal Study Progress' : 'Danger Zone'}
         </h2>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-          Permanently delete all saved lessons, favorites, quiz history, and revision progress from
-          this browser.
+          {supabaseConfigured
+            ? 'Clear your personal favorites, quiz history, and revision progress on this browser. Shared Supabase vocabulary is never deleted.'
+            : 'Permanently delete all saved lessons, favorites, quiz history, and revision progress from this browser.'}
         </p>
         <button
           type="button"
@@ -275,7 +409,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 min-h-[42px] rounded-lg text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 transition-colors"
         >
           <Trash2 className="w-4 h-4" />
-          <span>Delete All Data</span>
+          <span>
+            {supabaseConfigured ? 'Reset Browser Progress' : 'Delete All Data'}
+          </span>
         </button>
       </section>
     </div>

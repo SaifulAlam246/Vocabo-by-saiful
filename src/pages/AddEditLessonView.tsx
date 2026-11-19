@@ -32,7 +32,8 @@ interface AddEditLessonViewProps {
   preferredPartNumber?: number;
   lessonsPerPart: number;
   wordsPerLesson: number;
-  onSaveLesson: (lesson: Lesson, isEdit: boolean) => void;
+  isSaving?: boolean;
+  onSaveLesson: (lesson: Lesson, isEdit: boolean) => void | Promise<void>;
   onCancel: () => void;
 }
 
@@ -43,6 +44,7 @@ export const AddEditLessonView: React.FC<AddEditLessonViewProps> = ({
   preferredPartNumber,
   lessonsPerPart,
   wordsPerLesson,
+  isSaving = false,
   onSaveLesson,
   onCancel,
 }) => {
@@ -501,11 +503,17 @@ export const AddEditLessonView: React.FC<AddEditLessonViewProps> = ({
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={draft.words.length === 0}
+                disabled={draft.words.length === 0 || isSaving}
                 className="inline-flex items-center gap-2 px-5 py-2 min-h-[42px] rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Save className="w-4 h-4" />
-                <span>{mode === 'edit' ? 'Save Changes' : 'Save Lesson'}</span>
+                <span>
+                  {isSaving
+                    ? 'Saving...'
+                    : mode === 'edit'
+                      ? 'Save Changes'
+                      : 'Save Lesson'}
+                </span>
               </button>
             </div>
           </div>
@@ -787,11 +795,17 @@ export const AddEditLessonView: React.FC<AddEditLessonViewProps> = ({
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={draft.words.length === 0}
+                disabled={draft.words.length === 0 || isSaving}
                 className="inline-flex items-center gap-2 px-6 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
               >
                 <Save className="w-4 h-4" />
-                <span>{mode === 'edit' ? 'Save Changes' : 'Save Lesson'}</span>
+                <span>
+                  {isSaving
+                    ? 'Saving...'
+                    : mode === 'edit'
+                      ? 'Save Changes'
+                      : 'Save Lesson'}
+                </span>
               </button>
             </div>
           </section>

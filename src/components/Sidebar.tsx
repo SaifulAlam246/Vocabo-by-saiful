@@ -8,11 +8,14 @@ import {
   HelpCircle,
   Layers,
   LayoutDashboard,
+  Lock,
+  LogOut,
   Menu,
   Moon,
   PlusCircle,
   RotateCw,
   Settings,
+  ShieldCheck,
   Star,
   Sun,
   X,
@@ -27,6 +30,11 @@ interface SidebarProps {
   mobileOpen: boolean;
   onSetMobileOpen: (open: boolean) => void;
   hidden?: boolean;
+  canManageContent: boolean;
+  isAdmin: boolean;
+  adminEmail: string | null;
+  onOpenAdminLogin: () => void;
+  onSignOutAdmin: () => void;
   counts: {
     parts: number;
     lessons: number;
@@ -52,6 +60,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   mobileOpen,
   onSetMobileOpen,
   hidden = false,
+  canManageContent,
+  isAdmin,
+  adminEmail,
+  onOpenAdminLogin,
+  onSignOutAdmin,
   counts,
 }) => {
   if (hidden) return null;
@@ -66,7 +79,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'reading', label: 'Reading Mode', icon: BookOpenText },
     { id: 'progress', label: 'Progress Tracker', icon: BarChart3 },
     { id: 'favorites', label: 'Favorites', icon: Star, count: counts.favorites },
-    { id: 'add-lesson', label: 'Add New Lesson', icon: PlusCircle, accent: true },
+    ...(isAdmin
+      ? [{ id: 'admin' as AppPage, label: 'Admin Dashboard', icon: ShieldCheck, accent: true }]
+      : []),
+    ...(canManageContent
+      ? [{ id: 'add-lesson' as AppPage, label: 'Add New Lesson', icon: PlusCircle, accent: true }]
+      : []),
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
@@ -112,6 +130,55 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </nav>
   );
 
+  const renderFooterActions = () => (
+    <div className="p-3 border-t border-slate-200 dark:border-slate-800 space-y-1">
+      <button
+        type="button"
+        onClick={onToggleTheme}
+        className="w-full flex items-center justify-between px-3 py-2.5 min-h-[42px] rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+      >
+        <span className="flex items-center gap-2.5">
+          {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+        </span>
+        <span className="text-xs text-slate-400 dark:text-slate-500">
+          {theme === 'dark' ? 'On' : 'Off'}
+        </span>
+      </button>
+
+      {isAdmin ? (
+        <button
+          type="button"
+          onClick={() => {
+            onSignOutAdmin();
+            onSetMobileOpen(false);
+          }}
+          title={adminEmail ? `Signed in as ${adminEmail}` : 'Sign out Admin'}
+          className="w-full flex items-center justify-between px-3 py-2 min-h-[40px] rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition-colors"
+        >
+          <span className="flex items-center gap-2 min-w-0">
+            <LogOut className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Admin Sign Out</span>
+          </span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => {
+            onOpenAdminLogin();
+            onSetMobileOpen(false);
+          }}
+          className="w-full flex items-center justify-between px-3 py-2 min-h-[40px] rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <Lock className="w-3.5 h-3.5 shrink-0" />
+            <span>Admin Login</span>
+          </span>
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <>
       {/* Mobile Compact Top Header */}
@@ -143,14 +210,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
-          <button
-            type="button"
-            onClick={() => handleSelect('add-lesson')}
-            className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-          >
-            <PlusCircle className="w-3.5 h-3.5" />
-            <span>Add</span>
-          </button>
+          {canManageContent && (
+            <button
+              type="button"
+              onClick={() => handleSelect('add-lesson')}
+              className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>Add</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -187,19 +256,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             {renderNavList()}
-
-            <div className="p-3 border-t border-slate-200 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={onToggleTheme}
-                className="w-full flex items-center justify-between px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
-              >
-                <span className="flex items-center gap-2.5">
-                  {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                  <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-                </span>
-              </button>
-            </div>
+            {renderFooterActions()}
           </aside>
         </div>
       )}
@@ -227,22 +284,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {renderNavList()}
-
-        <div className="p-3 border-t border-slate-200 dark:border-slate-800">
-          <button
-            type="button"
-            onClick={onToggleTheme}
-            className="w-full flex items-center justify-between px-3 py-2.5 min-h-[42px] rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-          >
-            <span className="flex items-center gap-2.5">
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-            </span>
-            <span className="text-xs text-slate-400 dark:text-slate-500">
-              {theme === 'dark' ? 'On' : 'Off'}
-            </span>
-          </button>
-        </div>
+        {renderFooterActions()}
       </aside>
     </>
   );

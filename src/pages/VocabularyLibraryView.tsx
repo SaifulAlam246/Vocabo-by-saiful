@@ -13,6 +13,8 @@ interface VocabularyLibraryViewProps {
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
+const ITEMS_PER_PAGE = 60;
+
 export const VocabularyLibraryView: React.FC<VocabularyLibraryViewProps> = ({
   lessons,
   onSelectWordOccurrences,
@@ -25,6 +27,7 @@ export const VocabularyLibraryView: React.FC<VocabularyLibraryViewProps> = ({
   const [letterFilter, setLetterFilter] = useState<string>('all');
   const [favoritesOnly, setFavoritesOnly] = useState<boolean>(false);
   const [groupDuplicates, setGroupDuplicates] = useState<boolean>(true);
+  const [page, setPage] = useState<number>(1);
 
   const sortedLessons = useMemo(() => sortLessons(lessons), [lessons]);
 
@@ -99,6 +102,13 @@ export const VocabularyLibraryView: React.FC<VocabularyLibraryViewProps> = ({
     }));
   }, [filteredOccurrences, groupDuplicates]);
 
+  const totalPages = Math.max(1, Math.ceil(displayGroups.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const pagedGroups = useMemo(() => {
+    const start = (safePage - 1) * ITEMS_PER_PAGE;
+    return displayGroups.slice(start, start + ITEMS_PER_PAGE);
+  }, [displayGroups, safePage]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -124,7 +134,10 @@ export const VocabularyLibraryView: React.FC<VocabularyLibraryViewProps> = ({
             <input
               type="search"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(1);
+              }}
               placeholder="Search English word, Bangla meaning, synonyms, antonyms..."
               className="w-full pl-10 pr-4 py-2.5 min-h-[42px] rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
@@ -136,6 +149,7 @@ export const VocabularyLibraryView: React.FC<VocabularyLibraryViewProps> = ({
               onChange={(e) => {
                 setPartFilter(e.target.value);
                 setLessonFilter('all');
+                setPage(1);
               }}
               aria-label="Filter by Part"
               className="px-3 py-2 min-h-[42px] rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm text-slate-700 dark:text-slate-200"
@@ -150,7 +164,10 @@ export const VocabularyLibraryView: React.FC<VocabularyLibraryViewProps> = ({
 
             <select
               value={lessonFilter}
-              onChange={(e) => setLessonFilter(e.target.value)}
+              onChange={(e) => {
+                setLessonFilter(e.target.value);
+                setPage(1);
+              }}
               aria-label="Filter by Lesson"
               className="px-3 py-2 min-h-[42px] rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm text-slate-700 dark:text-slate-200"
             >
@@ -164,7 +181,10 @@ export const VocabularyLibraryView: React.FC<VocabularyLibraryViewProps> = ({
 
             <button
               type="button"
-              onClick={() => setFavoritesOnly((v) => !v)}
+              onClick={() => {
+                setFavoritesOnly((v) => !v);
+                setPage(1);
+              }}
               className={`inline-flex items-center gap-1.5 px-3 py-2 min-h-[42px] rounded-lg text-xs font-medium border transition-colors whitespace-nowrap ${
                 favoritesOnly
                   ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300'
@@ -177,7 +197,10 @@ export const VocabularyLibraryView: React.FC<VocabularyLibraryViewProps> = ({
 
             <button
               type="button"
-              onClick={() => setGroupDuplicates((v) => !v)}
+              onClick={() => {
+                setGroupDuplicates((v) => !v);
+                setPage(1);
+              }}
               className={`px-3 py-2 min-h-[42px] rounded-lg text-xs font-medium border transition-colors whitespace-nowrap ${
                 groupDuplicates
                   ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
@@ -193,7 +216,10 @@ export const VocabularyLibraryView: React.FC<VocabularyLibraryViewProps> = ({
         <div className="flex items-center gap-1 overflow-x-auto pb-1">
           <button
             type="button"
-            onClick={() => setLetterFilter('all')}
+            onClick={() => {
+              setLetterFilter('all');
+              setPage(1);
+            }}
             className={`px-2.5 py-1 rounded-md text-xs font-medium shrink-0 transition-colors ${
               letterFilter === 'all'
                 ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
@@ -206,7 +232,10 @@ export const VocabularyLibraryView: React.FC<VocabularyLibraryViewProps> = ({
             <button
               key={letter}
               type="button"
-              onClick={() => setLetterFilter(letter)}
+              onClick={() => {
+                setLetterFilter(letter);
+                setPage(1);
+              }}
               className={`w-7 h-7 rounded-md text-xs font-mono-num font-medium shrink-0 transition-colors ${
                 letterFilter === letter
                   ? 'bg-blue-600 text-white'
@@ -231,8 +260,9 @@ export const VocabularyLibraryView: React.FC<VocabularyLibraryViewProps> = ({
           </p>
         </div>
       ) : (
-        <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
-          {displayGroups.map(({ key, primary, occurrences }) => {
+        <>
+          <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
+            {pagedGroups.map(({ key, primary, occurrences }) => {
             const { word, lesson } = primary;
             const anyFavorite = occurrences.some((o) => o.word.isFavorite);
             return (
@@ -307,7 +337,42 @@ export const VocabularyLibraryView: React.FC<VocabularyLibraryViewProps> = ({
               </div>
             );
           })}
-        </div>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+              <span className="font-mono-num">
+                Showing {(safePage - 1) * ITEMS_PER_PAGE + 1}–
+                {Math.min(safePage * ITEMS_PER_PAGE, displayGroups.length)} of{' '}
+                {displayGroups.length} (Page {safePage} of {totalPages})
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={safePage <= 1}
+                  onClick={() => {
+                    setPage((p) => Math.max(1, p - 1));
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="px-3.5 py-2 min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  disabled={safePage >= totalPages}
+                  onClick={() => {
+                    setPage((p) => Math.min(totalPages, p + 1));
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="px-3.5 py-2 min-h-[36px] rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

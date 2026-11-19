@@ -8,6 +8,7 @@ export interface TermMeaning {
 export interface VocabWord {
   id: string;
   sourceNumber?: number;
+  wordOrder?: number;
   word: string;
   partOfSpeech?: string;
   cefrLevel?: string;
@@ -35,8 +36,19 @@ export interface StoryReviewItem {
   usage: string;
 }
 
+export interface PartRecord {
+  id: string;
+  partNumber: number;
+  title: string;
+  description: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Lesson {
   id: string;
+  partId?: string;
+  clientKey?: string;
   partNumber: number;
   lessonIndexInPart: number; // 1..lessonsPerPart (default 1..5)
   lessonCode: string; // e.g., "1.1", "2.3"
@@ -49,6 +61,7 @@ export interface Lesson {
   storyWordReview: StoryReviewItem[];
   storyWordReviewRaw?: string;
   rawInput?: string;
+  isPublished?: boolean;
   completed: boolean;
   completedAt?: string;
   storyCompleted?: boolean;
@@ -59,7 +72,10 @@ export interface Lesson {
 }
 
 export interface PartSummary {
+  id?: string;
   partNumber: number;
+  title?: string;
+  description?: string;
   lessons: Lesson[];
   totalWords: number;
   completedLessons: number;
@@ -155,6 +171,7 @@ export type AppPage =
   | 'favorites'
   | 'add-lesson'
   | 'edit-lesson'
+  | 'admin'
   | 'settings';
 
 export interface ToastMessage {
@@ -162,3 +179,57 @@ export interface ToastMessage {
   type: 'success' | 'error' | 'info' | 'warning';
   message: string;
 }
+
+export interface AdminAuthState {
+  configured: boolean;
+  loading: boolean;
+  userId: string | null;
+  email: string | null;
+  isAdmin: boolean;
+  error: string | null;
+}
+
+export type MigrationConflictMode = 'skip' | 'update';
+
+export interface MigrationLessonItemResult {
+  lessonCode: string;
+  partNumber: number;
+  wordCount: number;
+  status: 'migrated' | 'updated' | 'skipped' | 'failed';
+  message?: string;
+}
+
+export interface MigrationReport {
+  startedAt: string;
+  finishedAt: string;
+  sourcePartCount: number;
+  sourceLessonCount: number;
+  sourceWordCount: number;
+  migratedParts: number;
+  migratedLessons: number;
+  updatedLessons: number;
+  skippedLessons: number;
+  failedLessons: number;
+  migratedWords: number;
+  verifiedSupabaseParts: number;
+  verifiedSupabaseLessons: number;
+  verifiedSupabaseWords: number;
+  countMismatchWarning?: string;
+  items: MigrationLessonItemResult[];
+}
+
+export interface SupabaseTableCheckResult {
+  tableName: string;
+  exists: boolean;
+  message?: string;
+}
+
+export interface SupabaseSetupStatus {
+  checkedAt: string;
+  allTablesReady: boolean;
+  missingTables: string[];
+  adminTableProtected: boolean;
+  tables: SupabaseTableCheckResult[];
+  summary: string;
+}
+

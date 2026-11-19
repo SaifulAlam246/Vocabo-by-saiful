@@ -12,13 +12,15 @@ import {
   Search,
   Star,
 } from 'lucide-react';
-import { AppPage, Lesson } from '../types/vocab';
+import { AppPage, Lesson, PartRecord } from '../types/vocab';
 import { groupLessonsIntoParts, sortLessons } from '../utils/numbering';
 import { WordOccurrence } from '../components/WordDetailModal';
 
 interface DashboardViewProps {
   lessons: Lesson[];
+  partRecords?: PartRecord[];
   lessonsPerPart: number;
+  canManageContent?: boolean;
   onNavigate: (page: AppPage) => void;
   onNavigateAddLesson: () => void;
   onOpenLesson: (lessonId: string) => void;
@@ -27,7 +29,9 @@ interface DashboardViewProps {
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
   lessons,
+  partRecords = [],
   lessonsPerPart,
+  canManageContent = true,
   onNavigate,
   onNavigateAddLesson,
   onOpenLesson,
@@ -36,7 +40,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
 
   const stats = useMemo(() => {
-    const parts = groupLessonsIntoParts(lessons, lessonsPerPart);
+    const parts = groupLessonsIntoParts(lessons, lessonsPerPart, partRecords);
     const totalParts = parts.length;
     const totalLessons = lessons.length;
     const totalWords = lessons.reduce((sum, l) => sum + l.words.length, 0);
@@ -51,7 +55,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       completedLessons,
       progressPercent,
     };
-  }, [lessons, lessonsPerPart]);
+  }, [lessons, lessonsPerPart, partRecords]);
 
   // Determine the lesson for "Continue Learning"
   const continueLesson = useMemo(() => {
@@ -175,7 +179,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <span>Continue Learning · Lesson {continueLesson.lessonCode}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
-            ) : (
+            ) : canManageContent ? (
               <button
                 type="button"
                 onClick={onNavigateAddLesson}
@@ -184,16 +188,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <PlusCircle className="w-4 h-4" />
                 <span>Add First Lesson</span>
               </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onNavigate('parts-lessons')}
+                className="inline-flex items-center gap-2 px-5 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors whitespace-nowrap"
+              >
+                <span>Browse Parts &amp; Lessons</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             )}
 
-            <button
-              type="button"
-              onClick={onNavigateAddLesson}
-              className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Add New Lesson</span>
-            </button>
+            {canManageContent && (
+              <button
+                type="button"
+                onClick={onNavigateAddLesson}
+                className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>Add New Lesson</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -367,16 +382,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="py-8 text-center">
               <BookOpen className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                No lessons saved yet. Paste your first 10-word batch to begin.
+                {canManageContent
+                  ? 'No lessons saved yet. Paste your first 10-word batch to begin.'
+                  : 'No lessons published yet.'}
               </p>
-              <button
-                type="button"
-                onClick={onNavigateAddLesson}
-                className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700"
-              >
-                <PlusCircle className="w-3.5 h-3.5" />
-                <span>Add New Lesson</span>
-              </button>
+              {canManageContent && (
+                <button
+                  type="button"
+                  onClick={onNavigateAddLesson}
+                  className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" />
+                  <span>Add New Lesson</span>
+                </button>
+              )}
             </div>
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800">

@@ -1,13 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import { FolderKanban, Layers, PlusCircle, Search } from 'lucide-react';
-import { Lesson } from '../types/vocab';
+import { Lesson, PartRecord } from '../types/vocab';
 import { groupLessonsIntoParts, sortLessons } from '../utils/numbering';
 import { PartCard } from '../components/PartCard';
 import { LessonCard } from '../components/LessonCard';
 
 interface PartsAndLessonsViewProps {
   lessons: Lesson[];
+  partRecords?: PartRecord[];
   lessonsPerPart: number;
+  canManageContent?: boolean;
   onOpenLesson: (lessonId: string) => void;
   onEditLesson: (lessonId: string) => void;
   onDeleteLesson: (lesson: Lesson) => void;
@@ -17,7 +19,9 @@ interface PartsAndLessonsViewProps {
 
 export const PartsAndLessonsView: React.FC<PartsAndLessonsViewProps> = ({
   lessons,
+  partRecords = [],
   lessonsPerPart,
+  canManageContent = true,
   onOpenLesson,
   onEditLesson,
   onDeleteLesson,
@@ -30,8 +34,8 @@ export const PartsAndLessonsView: React.FC<PartsAndLessonsViewProps> = ({
   const [query, setQuery] = useState('');
 
   const parts = useMemo(
-    () => groupLessonsIntoParts(lessons, lessonsPerPart),
-    [lessons, lessonsPerPart]
+    () => groupLessonsIntoParts(lessons, lessonsPerPart, partRecords),
+    [lessons, lessonsPerPart, partRecords]
   );
 
   const partNumbers = useMemo(() => {
@@ -99,14 +103,16 @@ export const PartsAndLessonsView: React.FC<PartsAndLessonsViewProps> = ({
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => onAddLesson()}
-            className="inline-flex items-center gap-2 px-4 py-2 min-h-[42px] rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors whitespace-nowrap"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>Add New Lesson</span>
-          </button>
+          {canManageContent && (
+            <button
+              type="button"
+              onClick={() => onAddLesson()}
+              className="inline-flex items-center gap-2 px-4 py-2 min-h-[42px] rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors whitespace-nowrap"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Add New Lesson</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -118,16 +124,20 @@ export const PartsAndLessonsView: React.FC<PartsAndLessonsViewProps> = ({
               No Parts Created Yet
             </h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-              Add your first lesson to automatically create Part 1 and Lesson 1.1.
+              {canManageContent
+                ? 'Add your first lesson to automatically create Part 1 and Lesson 1.1.'
+                : 'No vocabulary lessons have been published yet. Please check back shortly.'}
             </p>
-            <button
-              type="button"
-              onClick={() => onAddLesson(1)}
-              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Add Lesson 1.1</span>
-            </button>
+            {canManageContent && (
+              <button
+                type="button"
+                onClick={() => onAddLesson(1)}
+                className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>Add Lesson 1.1</span>
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-5">
@@ -135,6 +145,7 @@ export const PartsAndLessonsView: React.FC<PartsAndLessonsViewProps> = ({
               <PartCard
                 key={part.partNumber}
                 part={part}
+                canManageContent={canManageContent}
                 onOpenLesson={onOpenLesson}
                 onAddLessonToPart={(partNum) => onAddLesson(partNum)}
               />
@@ -207,6 +218,7 @@ export const PartsAndLessonsView: React.FC<PartsAndLessonsViewProps> = ({
                 <LessonCard
                   key={lesson.id}
                   lesson={lesson}
+                  canManageContent={canManageContent}
                   onOpen={() => onOpenLesson(lesson.id)}
                   onEdit={() => onEditLesson(lesson.id)}
                   onDelete={() => onDeleteLesson(lesson)}
